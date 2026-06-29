@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1000+ Stars Constellation - Vaibhav</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #03030c;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Screen size set karein
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const numParticles = 1500; // 1500 Sitare (Stars)
+        const textToForm = "VAIBHAV";
+        let textCoordinates = [];
+
+        // 1. Pehle background mein "VAIBHAV" likhkar uske pixels ke coordinates nikalna
+        function getTextCoordinates() {
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 140px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(textToForm, canvas.width / 2, canvas.height / 2);
+
+            // Canvas se pixels ka data read karna
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Canvas saaf karein taaki sirf sitare dikhein
+
+            const coords = [];
+            // Har 4th pixel check karenge taaki stars thode gap me achhe dikhein
+            for (let y = 0; y < canvas.height; y += 4) {
+                for (let x = 0; x < canvas.width; x += 4) {
+                    const index = (y * canvas.width + x) * 4;
+                    const alpha = imgData.data[index + 3]; // Opacity/Alpha value
+                    if (alpha > 128) {
+                        coords.push({ x: x, y: y });
+                    }
+                }
+            }
+            return coords;
+        }
+
+        // Particle Class (Har ek sitare ki property)
+        class Particle {
+            constructor() {
+                // Shuruat me saare sitare bikhre (scattered) honge
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                
+                // Final target position (naam banna)
+                this.targetX = this.x;
+                this.targetY = this.y;
+
+                this.size = Math.random() * 2 + 0.5; // Sitare ka size
+                this.speed = Math.random() * 0.03 + 0.02; // Move hone ki speed
+                this.alpha = Math.random() * 0.5 + 0.5; // Brightness
+            }
+
+            update() {
+                // Sitare ko dheere-dheere uske target (naam) ki taraf badhana
+                this.x += (this.targetX - this.x) * this.speed;
+                this.y += (this.targetY - this.y) * this.speed;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#fff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Initialize Animation
+        function init() {
+            textCoordinates = getTextCoordinates();
+
+            // 1500 particles create karna
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle());
+            }
+
+            // 2.5 seconds ke baad saare sitaron ko unka target coordinate dena (naam banane ke liye)
+            setTimeout(() => {
+                for (let i = 0; i < particles.length; i++) {
+                    if (textCoordinates[i % textCoordinates.length]) {
+                        // Agar naam ke coordinates hain, to sitara wahan jayega
+                        particles[i].targetX = textCoordinates[i % textCoordinates.length].x + (Math.random() * 6 - 3);
+                        particles[i].targetY = textCoordinates[i % textCoordinates.length].y + (Math.random() * 6 - 3);
+                    }
+                }
+            }, 2500); // 2500ms yani 2.5 second tak sitare scattered rahenge
+        }
+
+        // Loop Animation
+        function animate() {
+            ctx.fillStyle = 'rgba(3, 3, 12, 0.3)'; // Dheere se purani frame mitana (tail effect ke liye)
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Window resize hone par handle karna
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles.length = 0;
+            init();
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
